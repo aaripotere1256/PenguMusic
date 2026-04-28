@@ -1,7 +1,9 @@
-const CACHE_NAME = 'pengumusic-v1';
+const CACHE_NAME = 'pengumusic-v2';
 const ASSETS = [
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', e => {
@@ -21,6 +23,10 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Ne pas intercepter les requêtes cross-origin (API YouTube, Supabase, Invidious)
+  if (!e.request.url.startsWith(self.location.origin)) {
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
