@@ -936,10 +936,13 @@ html, body {
   #desktop-main {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    margin-left: var(--sidebar-w);
-    height: 100vh;
+    position: fixed;
+    left: var(--sidebar-w);
+    right: 0;
+    top: 0;
+    bottom: 0;
     overflow: hidden;
+    z-index: 10;
   }
 
   /* ── Top bar ── */
