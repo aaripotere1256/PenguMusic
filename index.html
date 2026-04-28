@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PenguMusic">
 <title>PenguMusic</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2070,6 +2072,7 @@ function updatePlayerUI() {
   // Desktop sync
   if (typeof dskUpdatePlayer === 'function') dskUpdatePlayer();
   if (typeof dskUpdateLike === 'function') dskUpdateLike();
+  if (typeof updateMediaSession === 'function') updateMediaSession(currentTrack);
 }
 
 function togglePlayPause() {
@@ -2760,6 +2763,56 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').ca
 // ==================== INIT AUDIO ENGINE ====================
 initAudioEngine();
 
+// ==================== WAKE LOCK (écran veille) ====================
+// Empêche l'écran de couper la lecture audio
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return; // non supporté
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch {}
+}
+
+async function releaseWakeLock() {
+  if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+}
+
+// Activer le wake lock dès qu'une lecture démarre, relâcher en pause
+if (audioEl) {
+  audioEl.addEventListener('play', () => requestWakeLock());
+  audioEl.addEventListener('pause', () => releaseWakeLock());
+  audioEl.addEventListener('ended', () => releaseWakeLock());
+}
+
+// Reprendre le wake lock si l'onglet redevient visible pendant une lecture
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && isPlaying) requestWakeLock();
+});
+
+// Media Session API — contrôles sur l'écran de verrouillage
+function updateMediaSession(track) {
+  if (!('mediaSession' in navigator) || !track) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: track.title,
+    artist: track.channel,
+    album: 'PenguMusic',
+    artwork: track.thumb ? [
+      { src: track.thumb, sizes: '226x226', type: 'image/jpeg' }
+    ] : [
+      { src: './icon-192.png', sizes: '192x192', type: 'image/png' }
+    ]
+  });
+  navigator.mediaSession.setActionHandler('play', () => audioEl?.play());
+  navigator.mediaSession.setActionHandler('pause', () => audioEl?.pause());
+  navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
+  navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+  navigator.mediaSession.setActionHandler('seekto', (d) => {
+    if (audioEl && d.seekTime != null) audioEl.currentTime = d.seekTime;
+  });
+}
+
 // ==================== INIT ====================
 document.getElementById('results-grid').style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:0 20px';
 renderHistory();
@@ -2999,8 +3052,9 @@ function dskUpdateUser() {
 }
 
 // ── Hook into existing functions ──
+// On patch hideAuthScreen pour y ajouter les mises à jour desktop
 const _origHideAuth = hideAuthScreen;
-window.hideAuthScreen = function() {
+hideAuthScreen = function() {
   _origHideAuth();
   dskUpdateUser();
   dskRenderLibrary();
