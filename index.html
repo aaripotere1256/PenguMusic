@@ -1577,6 +1577,7 @@ html, body {
 
 
 <div id="toast"></div>
+<div id="yt-container" style="position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;opacity:0;pointer-events:none"><div id="yt-player"></div></div>
 
 <!-- ═══════════════════════════════════
      DESKTOP LAYOUT
@@ -2076,8 +2077,8 @@ function updatePlayerUI() {
 }
 
 function togglePlayPause() {
-  if (!currentTrack || !audioEl) return;
-  if (isPlaying) audioEl.pause(); else audioEl.play().catch(() => {});
+  if (!currentTrack) return;
+  if (isPlaying) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
 }
 
 function playNext() {
@@ -2127,7 +2128,7 @@ function toggleRepeat() {
 
 function setVolume(val) {
   volume = parseInt(val);
-  if (audioEl) audioEl.volume = volume / 100;
+  ytPlayer.setVolume(volume);
   const pct = volume + '%';
   document.getElementById('fp-volume-slider').style.background = `linear-gradient(to right, var(--accent) ${pct}, var(--bg3) ${pct})`;
 }
@@ -2140,80 +2141,184 @@ function shareCurrentTrack() {
 }
 
 // ==================== AUDIO ENGINE (Invidious, pas d'iframe YT) ====================
-let audioEl = null;  // <audio> natif, remplace ytPlayer
+let audioEl = null;       // <audio> pour Invidious fallback
+let usingFallback = false;
 
 function initAudioEngine() {
   audioEl = new Audio();
+  audioEl.crossOrigin = 'anonymous';
   audioEl.volume = volume / 100;
-  audioEl.addEventListener('play', () => {
-    isPlaying = true; updatePlayBtns(); startProgress();
-    document.getElementById('player-inner').classList.add('playing');
-    document.getElementById('fp-art').classList.add('playing');
-  });
-  audioEl.addEventListener('pause', () => {
-    isPlaying = false; updatePlayBtns(); stopProgress();
-    document.getElementById('player-inner').classList.remove('playing');
-    document.getElementById('fp-art').classList.remove('playing');
-  });
-  audioEl.addEventListener('ended', () => {
-    isPlaying = false; updatePlayBtns(); stopProgress();
-    document.getElementById('player-inner').classList.remove('playing');
-    document.getElementById('fp-art').classList.remove('playing');
+  audioEl.addEventListener('play', onAudioPlay);
+  audioEl.addEventListener('pause', onAudioPause);
+  audioEl.addEventListener('ended', onAudioEnded);
+  audioEl.addEventListener('error', () => {
+    console.warn('Audio fallback error, skip');
     playNext();
   });
-  audioEl.addEventListener('error', () => {
-    showToast('Erreur de lecture, nouvelle tentative...');
-    if (currentTrack) fetchAndPlay(currentTrack.id, true);
-  });
-  ytReady = true; // compatibilité avec le reste du code
 }
 
-// Cache des URLs audio pour éviter de refetch
+function onAudioPlay() {
+  isPlaying = true; updatePlayBtns(); startProgress();
+  document.getElementById('player-inner').classList.add('playing');
+  document.getElementById('fp-art').classList.add('playing');
+  requestWakeLock();
+}
+function onAudioPause() {
+  isPlaying = false; updatePlayBtns(); stopProgress();
+  document.getElementById('player-inner').classList.remove('playing');
+  document.getElementById('fp-art').classList.remove('playing');
+  releaseWakeLock();
+}
+function onAudioEnded() {
+  isPlaying = false; updatePlayBtns(); stopProgress();
+  document.getElementById('player-inner').classList.remove('playing');
+  document.getElementById('fp-art').classList.remove('playing');
+  playNext();
+}
+
+// Cache des URLs audio
 const audioCache = {};
 
-async function fetchAndPlay(videoId, skipCache) {
-  if (!skipCache && audioCache[videoId]) {
-    audioEl.src = audioCache[videoId];
-    audioEl.play().catch(() => showToast('Lecture bloquée par le navigateur'));
-    return;
-  }
-  showToast('Chargement...');
-  for (const inst of INVIDIOUS_INSTANCES) {
+// Instances Invidious + proxies CORS publics en fallback
+const CORS_PROXIES = [
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+];
+
+async function fetchInvidiousAudio(videoId) {
+  const endpoints = INVIDIOUS_INSTANCES.map(inst =>
+    `${inst}/api/v1/videos/${videoId}?fields=adaptiveFormats`
+  );
+
+  // 1. Essai direct
+  for (const url of endpoints) {
     try {
-      const res = await fetch(`${inst}/api/v1/videos/${videoId}?fields=adaptiveFormats,lengthSeconds`, { signal: AbortSignal.timeout(6000) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
       if (!res.ok) continue;
       const data = await res.json();
-      // Préférer opus/webm pour qualité, sinon mp4a
-      const fmts = (data.adaptiveFormats || []).filter(f => f.type?.startsWith('audio/'));
-      if (!fmts.length) continue;
-      // Trier : opus d'abord (meilleure qualité), puis par bitrate
-      fmts.sort((a, b) => {
-        const aOpus = a.type?.includes('opus') ? 1 : 0;
-        const bOpus = b.type?.includes('opus') ? 1 : 0;
-        if (bOpus !== aOpus) return bOpus - aOpus;
-        return (b.bitrate || 0) - (a.bitrate || 0);
-      });
-      const url = fmts[0].url;
-      audioCache[videoId] = url;
-      audioEl.src = url;
-      await audioEl.play();
-      return;
-    } catch (err) {
-      console.warn('Invidious instance failed:', inst, err);
+      const fmt = getBestAudioFmt(data.adaptiveFormats);
+      if (fmt) return fmt.url;
+    } catch {}
+  }
+
+  // 2. Via proxies CORS
+  for (const proxy of CORS_PROXIES) {
+    for (const url of endpoints) {
+      try {
+        const res = await fetch(proxy(url), { signal: AbortSignal.timeout(6000) });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const fmt = getBestAudioFmt(data.adaptiveFormats);
+        if (fmt) return fmt.url;
+      } catch {}
     }
   }
-  showToast('Impossible de lire ce titre 😢');
+  return null;
 }
 
-// Remplacement des méthodes ytPlayer utilisées ailleurs
+function getBestAudioFmt(formats) {
+  if (!formats) return null;
+  const audio = formats.filter(f => f.type?.startsWith('audio/'));
+  if (!audio.length) return null;
+  audio.sort((a, b) => {
+    const aOpus = a.type?.includes('opus') ? 1 : 0;
+    const bOpus = b.type?.includes('opus') ? 1 : 0;
+    if (bOpus !== aOpus) return bOpus - aOpus;
+    return (b.bitrate || 0) - (a.bitrate || 0);
+  });
+  return audio[0];
+}
+
+async function fetchAndPlay(videoId, skipCache) {
+  // Essayer Invidious d'abord
+  if (!skipCache && audioCache[videoId]) {
+    usingFallback = true;
+    audioEl.src = audioCache[videoId];
+    try { await audioEl.play(); return; } catch {}
+  }
+
+  showToast('Chargement...');
+  const audioUrl = await fetchInvidiousAudio(videoId);
+
+  if (audioUrl) {
+    audioCache[videoId] = audioUrl;
+    usingFallback = true;
+    // Stopper YT si en cours
+    try { ytPlayer.pauseVideo(); } catch {}
+    audioEl.src = audioUrl;
+    try {
+      await audioEl.play();
+      return;
+    } catch (e) {
+      console.warn('Audio play failed:', e);
+    }
+  }
+
+  // Fallback : iframe YouTube cachée
+  console.log('Invidious indispo, fallback YouTube iframe');
+  showToast('Chargement via YouTube...');
+  usingFallback = false;
+  ytPlayer._loadYT(videoId);
+}
+
+// ==================== YT IFRAME (fallback caché) ====================
+window.onYouTubeIframeAPIReady = function() {
+  ytReady = true;
+  const p = new YT.Player('yt-player', {
+    height: '1', width: '1',
+    host: 'https://www.youtube-nocookie.com',
+    playerVars: {
+      autoplay: 0, controls: 0, disablekb: 1, fs: 0,
+      iv_load_policy: 3, modestbranding: 1, rel: 0,
+      origin: window.location.origin, playsinline: 1
+    },
+    events: {
+      onReady: () => { p.setVolume(volume); },
+      onStateChange: (e) => {
+        if (usingFallback) return; // géré par audioEl
+        const S = YT.PlayerState;
+        if (e.data === S.PLAYING) { onAudioPlay(); }
+        else if (e.data === S.PAUSED) { onAudioPause(); }
+        else if (e.data === S.ENDED) { onAudioEnded(); }
+      },
+      onError: () => showToast('Impossible de lire ce titre 😢')
+    }
+  });
+  ytPlayer._ref = p;
+};
+
+// Objet ytPlayer unifié
 const ytPlayer = {
-  getCurrentTime: () => audioEl?.currentTime || 0,
-  getDuration: () => audioEl?.duration || 0,
-  seekTo: (t) => { if (audioEl) audioEl.currentTime = t; },
-  pauseVideo: () => audioEl?.pause(),
-  playVideo: () => audioEl?.play().catch(() => {}),
-  setVolume: (v) => { if (audioEl) audioEl.volume = v / 100; },
-  loadVideoById: ({ videoId }) => fetchAndPlay(videoId, false),
+  _ref: null,
+  _loadYT(videoId) {
+    if (this._ref) this._ref.loadVideoById({ videoId, startSeconds: 0 });
+    else setTimeout(() => this._loadYT(videoId), 500);
+  },
+  getCurrentTime() {
+    if (usingFallback) return audioEl?.currentTime || 0;
+    return this._ref?.getCurrentTime?.() || 0;
+  },
+  getDuration() {
+    if (usingFallback) return audioEl?.duration || 0;
+    return this._ref?.getDuration?.() || 0;
+  },
+  seekTo(t) {
+    if (usingFallback) { if (audioEl) audioEl.currentTime = t; }
+    else this._ref?.seekTo?.(t, true);
+  },
+  pauseVideo() {
+    if (usingFallback) audioEl?.pause();
+    else this._ref?.pauseVideo?.();
+  },
+  playVideo() {
+    if (usingFallback) audioEl?.play().catch(() => {});
+    else this._ref?.playVideo?.();
+  },
+  setVolume(v) {
+    if (audioEl) audioEl.volume = v / 100;
+    this._ref?.setVolume?.(v);
+  },
+  loadVideoById({ videoId }) { fetchAndPlay(videoId, false); },
 };
 
 function updatePlayBtns() {
@@ -2228,9 +2333,9 @@ function updatePlayBtns() {
 function startProgress() { stopProgress(); progressInterval = setInterval(updateProgress, 500); }
 function stopProgress() { if (progressInterval) { clearInterval(progressInterval); progressInterval = null; } }
 function updateProgress() {
-  if (!audioEl || !currentTrack) return;
+  if (!currentTrack) return;
   try {
-    const cur = audioEl.currentTime, dur = audioEl.duration;
+    const cur = ytPlayer.getCurrentTime(), dur = ytPlayer.getDuration();
     if (!dur || isNaN(dur)) return;
     const pct = (cur / dur) * 100;
     document.getElementById('progress-bar-fill').style.width = pct + '%';
@@ -2244,14 +2349,14 @@ function updateProgress() {
 }
 
 document.getElementById('progress-bar-wrap').addEventListener('click', function(e) {
-  if (!audioEl || !currentTrack) return;
+  if (!currentTrack) return;
   const rect = this.getBoundingClientRect(), pct = (e.clientX - rect.left) / rect.width;
-  if (audioEl.duration) audioEl.currentTime = pct * audioEl.duration;
+  const dur = ytPlayer.getDuration(); if (dur) ytPlayer.seekTo(pct * dur);
 });
 document.getElementById('fp-bar-wrap').addEventListener('click', function(e) {
-  if (!audioEl || !currentTrack) return;
+  if (!currentTrack) return;
   const rect = this.getBoundingClientRect(), pct = (e.clientX - rect.left) / rect.width;
-  if (audioEl.duration) audioEl.currentTime = pct * audioEl.duration;
+  const dur = ytPlayer.getDuration(); if (dur) ytPlayer.seekTo(pct * dur);
 });
 
 // ==================== FULLSCREEN PLAYER ====================
@@ -2763,6 +2868,11 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').ca
 // ==================== INIT AUDIO ENGINE ====================
 initAudioEngine();
 
+// ==================== LOAD YT API (fallback) ====================
+const ytTag = document.createElement('script');
+ytTag.src = 'https://www.youtube.com/iframe_api';
+document.head.appendChild(ytTag);
+
 // ==================== WAKE LOCK (écran veille) ====================
 // Empêche l'écran de couper la lecture audio
 let wakeLock = null;
@@ -2780,11 +2890,8 @@ async function releaseWakeLock() {
 }
 
 // Activer le wake lock dès qu'une lecture démarre, relâcher en pause
-if (audioEl) {
-  audioEl.addEventListener('play', () => requestWakeLock());
-  audioEl.addEventListener('pause', () => releaseWakeLock());
-  audioEl.addEventListener('ended', () => releaseWakeLock());
-}
+// Les events play/pause sont gérés dans onAudioPlay/onAudioPause
+// Pour YT iframe on accroche via onAudioPlay appelé manuellement
 
 // Reprendre le wake lock si l'onglet redevient visible pendant une lecture
 document.addEventListener('visibilitychange', () => {
