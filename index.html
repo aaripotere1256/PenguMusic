@@ -818,6 +818,454 @@ html, body {
   box-shadow: 0 4px 20px var(--accent-glow); transition: transform 0.1s;
 }
 .login-prompt-btn:hover { transform: scale(1.02); }
+
+/* ═══════════════════════════════════
+   DESKTOP LAYOUT (≥ 768px)
+═══════════════════════════════════ */
+@media (min-width: 768px) {
+  :root {
+    --sidebar-w: 240px;
+    --player-h: 80px;
+    --nav-h: 0px;
+  }
+
+  html, body { overflow: hidden; }
+
+  #app {
+    flex-direction: row;
+    height: 100vh;
+  }
+
+  /* ── Sidebar gauche ── */
+  #desktop-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: rgba(5,20,38,0.85);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(184,224,247,0.08);
+    height: 100vh;
+    position: fixed;
+    left: 0; top: 0;
+    z-index: 100;
+    padding: 0 0 calc(var(--player-h) + 20px);
+    overflow: hidden;
+  }
+
+  #sidebar-logo {
+    display: flex; align-items: center; gap: 12px;
+    padding: 22px 20px 20px;
+    border-bottom: 1px solid rgba(184,224,247,0.07);
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+  #sidebar-logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--teal), var(--aurora2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 16px var(--accent-glow);
+    flex-shrink: 0;
+  }
+  #sidebar-logo-text {
+    font-family: 'Righteous', cursive;
+    font-size: 1.3rem;
+    color: var(--text-accent);
+    letter-spacing: 0.3px;
+  }
+
+  .sidebar-section-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px;
+    color: var(--text3); text-transform: uppercase;
+    padding: 14px 20px 6px; flex-shrink: 0;
+  }
+
+  .sidebar-nav-btn {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; margin: 2px 10px;
+    border-radius: 12px; background: none; border: none;
+    color: var(--text2); font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; text-align: left;
+    width: calc(100% - 20px);
+  }
+  .sidebar-nav-btn:hover {
+    background: rgba(184,224,247,0.06);
+    color: var(--text);
+  }
+  .sidebar-nav-btn.active {
+    background: rgba(23,165,137,0.15);
+    color: var(--teal);
+    border: 1px solid rgba(23,165,137,0.2);
+  }
+  .sidebar-nav-icon { font-size: 18px; flex-shrink: 0; width: 22px; text-align: center; }
+
+  #sidebar-user {
+    margin-top: auto;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(184,224,247,0.07);
+    flex-shrink: 0;
+  }
+  #sidebar-user-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 12px;
+    background: rgba(184,224,247,0.04);
+    border: 1px solid rgba(184,224,247,0.08);
+    cursor: pointer; transition: all 0.2s;
+  }
+  #sidebar-user-card:hover { background: rgba(184,224,247,0.08); }
+  #sidebar-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--aurora2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800; color: white;
+    flex-shrink: 0; font-family: 'Nunito', sans-serif;
+  }
+  #sidebar-user-info { flex: 1; min-width: 0; }
+  #sidebar-user-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #sidebar-user-email { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #sidebar-logout-btn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 16px; padding: 4px; border-radius: 8px; transition: color 0.2s; flex-shrink: 0;
+  }
+  #sidebar-logout-btn:hover { color: var(--danger); }
+
+  /* ── Main content area ── */
+  #desktop-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin-left: var(--sidebar-w);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Top bar ── */
+  #desktop-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 32px;
+    background: rgba(5,20,38,0.6);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(184,224,247,0.06);
+    flex-shrink: 0;
+    z-index: 50;
+  }
+  #desktop-search-container {
+    flex: 1; max-width: 480px;
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(184,224,247,0.06);
+    border: 1px solid rgba(184,224,247,0.12);
+    border-radius: 50px; padding: 10px 18px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #desktop-search-container:focus-within {
+    border-color: rgba(23,165,137,0.4);
+    box-shadow: 0 0 0 3px rgba(23,165,137,0.12);
+  }
+  #desktop-search-input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-family: 'Nunito', sans-serif; font-size: 14px;
+    caret-color: var(--teal);
+  }
+  #desktop-search-input::placeholder { color: var(--text3); }
+
+  #desktop-tabs {
+    display: flex; gap: 6px; flex-shrink: 0;
+  }
+  .desktop-tab-btn {
+    flex-shrink: 0; background: rgba(184,224,247,0.06);
+    border: 1px solid rgba(184,224,247,0.10);
+    border-radius: 50px; padding: 7px 16px;
+    color: var(--text2); font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .desktop-tab-btn.active {
+    background: rgba(23,165,137,0.15);
+    border-color: rgba(23,165,137,0.3);
+    color: var(--teal);
+  }
+
+  /* ── Content scroll ── */
+  #desktop-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(184,224,247,0.15) transparent;
+    padding-bottom: calc(var(--player-h) + 20px);
+  }
+  #desktop-content::-webkit-scrollbar { width: 6px; }
+  #desktop-content::-webkit-scrollbar-track { background: transparent; }
+  #desktop-content::-webkit-scrollbar-thumb { background: rgba(184,224,247,0.15); border-radius: 3px; }
+
+  /* content panels inside desktop-content */
+  #desktop-panel-search,
+  #desktop-panel-library,
+  #desktop-panel-profile { display: none; padding: 28px 32px; }
+  #desktop-panel-search.active,
+  #desktop-panel-library.active,
+  #desktop-panel-profile.active { display: block; }
+
+  /* ── Desktop empty/loading states ── */
+  #desktop-empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 80px 40px; text-align: center; gap: 14px; color: var(--text3);
+  }
+  #desktop-empty-state .dsk-penguin { font-size: 64px; margin-bottom: 8px; }
+  #desktop-empty-state h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--text2); }
+  #desktop-empty-state p { font-size: 14px; line-height: 1.6; max-width: 340px; }
+
+  #desktop-loading-state {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 40px; gap: 16px;
+  }
+
+  #desktop-results-grid { display: flex; flex-direction: column; gap: 6px; }
+
+  /* Bigger track cards on desktop */
+  #desktop-results-grid .track-card { padding: 12px 14px; border-radius: 12px; }
+  #desktop-results-grid .track-thumb { width: 56px; height: 56px; border-radius: 10px; }
+  #desktop-results-grid .track-title { font-size: 15px; }
+
+  /* ── Desktop player (bottom bar) ── */
+  #desktop-player {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--player-h);
+    background: rgba(3,14,26,0.96);
+    backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(184,224,247,0.10);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    z-index: 200;
+  }
+
+  #dsk-player-track {
+    display: flex; align-items: center; gap: 14px;
+    width: 280px; flex-shrink: 0; min-width: 0;
+  }
+  #dsk-thumb {
+    width: 52px; height: 52px; border-radius: 10px;
+    background: var(--bg3); overflow: hidden; flex-shrink: 0; position: relative;
+  }
+  #dsk-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  #dsk-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--text3); }
+  #dsk-track-info { flex: 1; min-width: 0; }
+  #dsk-track-title { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+  #dsk-track-channel { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #dsk-like-btn {
+    background: none; border: none; font-size: 18px; cursor: pointer;
+    color: var(--text3); transition: color 0.2s; padding: 4px; flex-shrink: 0;
+  }
+  #dsk-like-btn:hover { color: var(--danger); }
+
+  #dsk-player-center {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  #dsk-controls {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dsk-ctrl-btn {
+    background: none; border: none; color: var(--text2); cursor: pointer;
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: color 0.15s, background 0.15s;
+  }
+  .dsk-ctrl-btn:hover { color: var(--text); background: rgba(184,224,247,0.08); }
+  .dsk-ctrl-btn.active-mode { color: var(--teal); }
+  #dsk-btn-play {
+    background: linear-gradient(135deg, var(--teal), var(--aurora2));
+    color: white; width: 44px; height: 44px; font-size: 20px;
+    box-shadow: 0 4px 16px var(--accent-glow);
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+  #dsk-btn-play:hover { transform: scale(1.06); box-shadow: 0 6px 24px var(--accent-glow); }
+
+  #dsk-progress {
+    display: flex; align-items: center; gap: 10px; width: 100%; max-width: 520px;
+  }
+  #dsk-time-cur, #dsk-time-dur { font-size: 11px; color: var(--text3); flex-shrink: 0; width: 32px; }
+  #dsk-time-dur { text-align: right; }
+  #dsk-bar-wrap {
+    flex: 1; height: 22px; display: flex; align-items: center; cursor: pointer;
+  }
+  #dsk-bar-bg {
+    width: 100%; height: 4px; background: rgba(184,224,247,0.12);
+    border-radius: 4px; overflow: hidden; position: relative;
+  }
+  #dsk-bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--teal), var(--aurora2));
+    border-radius: 4px; width: 0%; transition: width 0.5s linear;
+  }
+
+  #dsk-player-right {
+    display: flex; align-items: center; gap: 10px;
+    width: 220px; justify-content: flex-end; flex-shrink: 0;
+  }
+  #dsk-volume-icon { font-size: 16px; color: var(--text3); }
+  #dsk-volume-slider {
+    width: 90px; appearance: none; height: 4px;
+    background: rgba(184,224,247,0.15); border-radius: 4px; outline: none; cursor: pointer;
+  }
+  #dsk-volume-slider::-webkit-slider-thumb {
+    appearance: none; width: 14px; height: 14px;
+    background: var(--teal); border-radius: 50%; cursor: pointer;
+  }
+  #dsk-fp-btn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 16px; padding: 6px; border-radius: 8px; transition: color 0.2s;
+  }
+  #dsk-fp-btn:hover { color: var(--text); }
+
+  #dsk-empty {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--text3); font-size: 13px; width: 100%; justify-content: center;
+  }
+
+  /* ── Library desktop ── */
+  #desktop-lib-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 28px;
+  }
+  .dsk-lib-card {
+    background: rgba(10,61,98,0.45);
+    border: 1px solid rgba(184,224,247,0.10);
+    border-radius: 16px; padding: 18px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .dsk-lib-card:hover { border-color: rgba(23,165,137,0.3); background: rgba(10,61,98,0.65); transform: translateY(-3px); }
+  .dsk-lib-card-icon {
+    width: 52px; height: 52px; border-radius: 14px; background: var(--bg3);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+  .dsk-lib-card-liked { background: linear-gradient(135deg, rgba(255,107,138,0.3), rgba(167,139,250,0.2)); }
+  .dsk-lib-card-queue { background: linear-gradient(135deg, rgba(23,165,137,0.3), rgba(74,222,128,0.1)); }
+  .dsk-lib-card-history { background: linear-gradient(135deg, rgba(240,192,64,0.2), rgba(23,165,137,0.15)); }
+  .dsk-lib-card h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; }
+  .dsk-lib-card p { font-size: 12px; color: var(--text3); }
+
+  #desktop-playlists-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .dsk-playlist-card {
+    background: rgba(10,61,98,0.45);
+    border: 1px solid rgba(184,224,247,0.10);
+    border-radius: 16px; padding: 16px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .dsk-playlist-card:hover { border-color: rgba(23,165,137,0.3); transform: translateY(-3px); }
+  .dsk-playlist-cover {
+    width: 100%; aspect-ratio: 1; border-radius: 12px;
+    background: var(--bg3); overflow: hidden;
+    display: flex; align-items: center; justify-content: center; font-size: 32px;
+    position: relative;
+  }
+  .dsk-playlist-cover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; width: 100%; height: 100%; border-radius: 12px; overflow: hidden; }
+  .dsk-playlist-cover-grid img { width: 100%; height: 100%; object-fit: cover; }
+  .dsk-playlist-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dsk-playlist-meta { font-size: 12px; color: var(--text3); }
+  .dsk-playlist-actions { display: flex; gap: 6px; margin-top: 2px; }
+  .dsk-playlist-btn {
+    flex: 1; padding: 8px; background: rgba(23,165,137,0.15);
+    border: 1px solid rgba(23,165,137,0.25); border-radius: 10px;
+    color: var(--teal); font-family: 'Nunito', sans-serif; font-size: 12px;
+    font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .dsk-playlist-btn:hover { background: rgba(23,165,137,0.25); }
+  .dsk-new-playlist-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: rgba(184,224,247,0.04);
+    border: 1.5px dashed rgba(184,224,247,0.15);
+    border-radius: 16px; padding: 16px;
+    cursor: pointer; transition: all 0.2s;
+    color: var(--text3); font-size: 13px; font-weight: 700;
+    font-family: 'Nunito', sans-serif;
+    aspect-ratio: unset; min-height: 80px;
+  }
+  .dsk-new-playlist-btn:hover { border-color: rgba(23,165,137,0.3); color: var(--teal); }
+
+  /* ── Profile desktop ── */
+  #desktop-profile-inner {
+    max-width: 680px;
+  }
+  .dsk-profile-header {
+    display: flex; align-items: center; gap: 24px;
+    padding: 24px;
+    background: rgba(10,61,98,0.45);
+    border: 1px solid rgba(184,224,247,0.10);
+    border-radius: 20px; margin-bottom: 20px;
+  }
+  .dsk-profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal), var(--aurora2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 700; color: white;
+    box-shadow: 0 8px 32px var(--accent-glow);
+    font-family: 'Nunito', sans-serif; flex-shrink: 0;
+  }
+  .dsk-profile-info { flex: 1; min-width: 0; }
+  .dsk-profile-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .dsk-profile-email { font-size: 13px; color: var(--text3); margin-bottom: 10px; }
+  .dsk-profile-stats { display: flex; gap: 20px; }
+  .dsk-profile-stat { text-align: center; }
+  .dsk-profile-stat-num { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--teal); }
+  .dsk-profile-stat-label { font-size: 11px; color: var(--text3); }
+
+  .dsk-section-title {
+    font-family: 'Righteous', cursive; font-size: 11px; font-weight: 800;
+    letter-spacing: 1.5px; color: var(--text3); text-transform: uppercase;
+    margin-bottom: 14px; margin-top: 24px;
+  }
+  .dsk-section-title:first-child { margin-top: 0; }
+
+  .dsk-logout-btn {
+    margin-top: 24px; padding: 13px 24px;
+    background: rgba(255,107,138,0.1); border: 1px solid rgba(255,107,138,0.3);
+    border-radius: 12px; color: var(--danger); font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .dsk-logout-btn:hover { background: rgba(255,107,138,0.2); }
+
+  /* ── Hide mobile-only elements on desktop ── */
+  #bottom-nav { display: none !important; }
+  #player { display: none !important; }
+  #header { display: none !important; }
+  #search-wrap { display: none !important; }
+  #tabs { display: none !important; }
+  #page-search, #page-library, #page-profile { display: none !important; }
+
+  /* ── Fullscreen player adapté desktop ── */
+  #fullscreen-player {
+    left: var(--sidebar-w);
+  }
+
+  /* ── Sub-view et playlist-view adaptés desktop ── */
+  #sub-view, #playlist-view {
+    left: var(--sidebar-w);
+  }
+
+  /* ── Auth screen ── */
+  #auth-screen {
+    left: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  #desktop-sidebar,
+  #desktop-main,
+  #desktop-player { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -1126,6 +1574,150 @@ html, body {
 <!-- YouTube iframe (hidden) -->
 <div id="yt-container"><div id="yt-player"></div></div>
 <div id="toast"></div>
+
+<!-- ═══════════════════════════════════
+     DESKTOP LAYOUT
+═══════════════════════════════════ -->
+
+<!-- Sidebar -->
+<div id="desktop-sidebar">
+  <div id="sidebar-logo">
+    <div id="sidebar-logo-icon">🐧</div>
+    <span id="sidebar-logo-text">PenguMusic</span>
+  </div>
+
+  <div class="sidebar-section-label">Navigation</div>
+  <button class="sidebar-nav-btn active" id="dsk-nav-search" onclick="dskSwitchPage('search')">
+    <span class="sidebar-nav-icon">🔍</span> Explorer
+  </button>
+  <button class="sidebar-nav-btn" id="dsk-nav-library" onclick="dskSwitchPage('library')">
+    <span class="sidebar-nav-icon">📚</span> Bibliothèque
+  </button>
+  <button class="sidebar-nav-btn" id="dsk-nav-profile" onclick="dskSwitchPage('profile')">
+    <span class="sidebar-nav-icon">👤</span> Profil
+  </button>
+
+  <div id="sidebar-user">
+    <div id="sidebar-user-card" onclick="dskSwitchPage('profile')">
+      <div id="sidebar-avatar">🐧</div>
+      <div id="sidebar-user-info">
+        <div id="sidebar-user-name">Chargement...</div>
+        <div id="sidebar-user-email"></div>
+      </div>
+      <button id="sidebar-logout-btn" onclick="event.stopPropagation();doLogout()" title="Se déconnecter">⏻</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="desktop-main">
+  <!-- Top bar -->
+  <div id="desktop-topbar">
+    <div id="desktop-search-container">
+      <span style="color:var(--text3);font-size:15px;flex-shrink:0">🔍</span>
+      <input id="desktop-search-input" type="search" placeholder="Artiste, titre, album..." autocomplete="off" autocorrect="off" spellcheck="false">
+      <button id="desktop-search-clear" style="display:none;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button>
+    </div>
+    <div id="desktop-tabs">
+      <button class="desktop-tab-btn active" data-filter="all">Tout</button>
+      <button class="desktop-tab-btn" data-filter="music">Musique</button>
+      <button class="desktop-tab-btn" data-filter="clip">Clips</button>
+      <button class="desktop-tab-btn" data-filter="live">Live</button>
+      <button class="desktop-tab-btn" data-filter="cover">Covers</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div id="desktop-content">
+
+    <!-- Search panel -->
+    <div id="desktop-panel-search" class="active">
+      <div id="desktop-empty-state">
+        <div class="dsk-penguin">🐧</div>
+        <h2>Qu'est-ce qu'on écoute ?</h2>
+        <p>Recherche un artiste, un titre ou une ambiance pour commencer.</p>
+      </div>
+      <div id="desktop-loading-state">
+        <div class="spinner"></div><p style="color:var(--text3);margin-top:12px;font-size:14px;">Recherche en cours...</p>
+      </div>
+      <div id="desktop-history-section" style="display:none;margin-bottom:24px">
+        <div class="dsk-section-title">Recherches récentes</div>
+        <div id="desktop-history-chips"></div>
+      </div>
+      <div id="desktop-results-grid"></div>
+    </div>
+
+    <!-- Library panel -->
+    <div id="desktop-panel-library">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <h1 style="font-family:'Righteous',cursive;font-size:1.8rem;color:var(--text-accent)">Ma Bibliothèque</h1>
+        <button onclick="openCreatePlaylist()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--teal),var(--aurora2));border:none;border-radius:12px;color:white;padding:10px 18px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 16px var(--accent-glow);">＋ Nouvelle playlist</button>
+      </div>
+      <div class="dsk-section-title">Collections</div>
+      <div id="desktop-lib-grid">
+        <div class="dsk-lib-card" onclick="dskOpenSubView('liked')">
+          <div class="dsk-lib-card-icon dsk-lib-card-liked">❤️</div>
+          <div><h3>Titres aimés</h3><p id="dsk-liked-count">0 titre</p></div>
+        </div>
+        <div class="dsk-lib-card" onclick="dskOpenSubView('queue')">
+          <div class="dsk-lib-card-icon dsk-lib-card-queue">📋</div>
+          <div><h3>File d'attente</h3><p id="dsk-queue-count">0 titre</p></div>
+        </div>
+        <div class="dsk-lib-card" onclick="dskOpenSubView('history')">
+          <div class="dsk-lib-card-icon dsk-lib-card-history">🕐</div>
+          <div><h3>Historique</h3><p id="dsk-history-count">0 titre</p></div>
+        </div>
+      </div>
+      <div class="dsk-section-title">Playlists</div>
+      <div id="desktop-playlists-grid"></div>
+    </div>
+
+    <!-- Profile panel -->
+    <div id="desktop-panel-profile">
+      <div id="desktop-profile-inner"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Desktop Player (bottom bar) -->
+<div id="desktop-player">
+  <div id="dsk-empty"><span>🎵</span> Lance une musique pour commencer</div>
+  <div id="dsk-player-track" style="display:none">
+    <div id="dsk-thumb">
+      <div id="dsk-thumb-placeholder">🎵</div>
+      <img id="dsk-thumb-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
+    </div>
+    <div id="dsk-track-info">
+      <div id="dsk-track-title">—</div>
+      <div id="dsk-track-channel">—</div>
+    </div>
+    <button id="dsk-like-btn" onclick="toggleLikeCurrent()">🤍</button>
+  </div>
+
+  <div id="dsk-player-center">
+    <div id="dsk-controls">
+      <button class="dsk-ctrl-btn" id="dsk-shuffle-btn" onclick="toggleShuffle()">🔀</button>
+      <button class="dsk-ctrl-btn" onclick="playPrev()">⏮</button>
+      <button class="dsk-ctrl-btn" id="dsk-btn-play" onclick="togglePlayPause()">▶</button>
+      <button class="dsk-ctrl-btn" onclick="playNext()">⏭</button>
+      <button class="dsk-ctrl-btn" id="dsk-repeat-btn" onclick="toggleRepeat()">🔁</button>
+    </div>
+    <div id="dsk-progress">
+      <span id="dsk-time-cur">0:00</span>
+      <div id="dsk-bar-wrap" onclick="dskSeek(event)">
+        <div id="dsk-bar-bg"><div id="dsk-bar-fill"></div></div>
+      </div>
+      <span id="dsk-time-dur">0:00</span>
+    </div>
+  </div>
+
+  <div id="dsk-player-right">
+    <span id="dsk-volume-icon">🔈</span>
+    <input type="range" id="dsk-volume-slider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+    <button id="dsk-fp-btn" onclick="openFullPlayer()" title="Agrandir">⬆</button>
+  </div>
+</div>
 
 <script>
 // ==================== SUPABASE ====================
@@ -1476,6 +2068,9 @@ function updatePlayerUI() {
     const overlay = c.querySelector('.play-overlay');
     if (overlay) overlay.textContent = isActive ? '⏸' : '▶';
   });
+  // Desktop sync
+  if (typeof dskUpdatePlayer === 'function') dskUpdatePlayer();
+  if (typeof dskUpdateLike === 'function') dskUpdateLike();
 }
 
 function togglePlayPause() {
@@ -1512,6 +2107,7 @@ function playPrev() {
 function toggleShuffle() {
   shuffleMode = !shuffleMode;
   document.getElementById('fp-shuffle-btn').classList.toggle('active-mode', shuffleMode);
+  if (typeof dskUpdateShuffle === 'function') dskUpdateShuffle(shuffleMode);
   showToast(shuffleMode ? 'Lecture aléatoire activée 🔀' : 'Lecture aléatoire désactivée');
 }
 
@@ -1522,6 +2118,7 @@ function toggleRepeat() {
   const btn = document.getElementById('fp-repeat-btn');
   btn.classList.toggle('active-mode', repeatMode !== 'none');
   btn.textContent = repeatMode === 'one' ? '🔂' : '🔁';
+  if (typeof dskUpdateRepeat === 'function') dskUpdateRepeat(repeatMode);
   const labels = { none: 'Répétition désactivée', all: 'Répéter tout 🔁', one: 'Répéter ce titre 🔂' };
   showToast(labels[repeatMode]);
 }
@@ -1597,6 +2194,7 @@ function updatePlayBtns() {
   document.getElementById('btn-play-pause').textContent = icon;
   document.getElementById('fp-btn-play').textContent = icon;
   document.querySelectorAll('.track-card.active .play-overlay').forEach(el => el.textContent = icon);
+  if (typeof dskUpdatePlayPause === 'function') dskUpdatePlayPause(isPlaying);
 }
 
 // ==================== PROGRESS ====================
@@ -1614,6 +2212,7 @@ function updateProgress() {
     document.getElementById('progress-time-dur').textContent = formatTime(dur);
     document.getElementById('fp-time-cur').textContent = formatTime(cur);
     document.getElementById('fp-time-dur').textContent = formatTime(dur);
+    if (typeof dskUpdateProgress === 'function') dskUpdateProgress(cur, dur);
   } catch {}
 }
 
@@ -2144,6 +2743,239 @@ document.getElementById('results-grid').style.cssText = 'display:flex;flex-direc
 renderHistory();
 if (searchHistory.length > 0) document.getElementById('empty-state').style.display = 'flex';
 initAuth();
+
+// ==================== DESKTOP JS ====================
+const isDesktop = () => window.innerWidth >= 768;
+
+// ── Page switching ──
+function dskSwitchPage(page) {
+  document.querySelectorAll('#desktop-panel-search,#desktop-panel-library,#desktop-panel-profile').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('desktop-panel-' + page).classList.add('active');
+  document.getElementById('dsk-nav-' + page).classList.add('active');
+  if (page === 'library') dskRenderLibrary();
+  if (page === 'profile') dskRenderProfile();
+}
+
+// ── Search ──
+let dskSearchTimeout = null;
+const dskInput = document.getElementById('desktop-search-input');
+const dskClear = document.getElementById('desktop-search-clear');
+
+function dskTriggerSearch(query) {
+  dskClear.style.display = query ? 'block' : 'none';
+  if (!query.trim()) {
+    document.getElementById('desktop-results-grid').innerHTML = '';
+    document.getElementById('desktop-loading-state').style.display = 'none';
+    document.getElementById('desktop-empty-state').style.display = 'flex';
+    dskRenderHistory(); return;
+  }
+  clearTimeout(dskSearchTimeout);
+  dskSearchTimeout = setTimeout(() => dskSearch(query, currentFilter), 450);
+}
+
+dskInput.addEventListener('input', e => dskTriggerSearch(e.target.value));
+dskInput.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(dskSearchTimeout); dskSearch(e.target.value, currentFilter); } });
+dskClear.addEventListener('click', () => { dskInput.value = ''; dskTriggerSearch(''); dskInput.focus(); });
+
+document.querySelectorAll('.desktop-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.desktop-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentFilter = btn.dataset.filter;
+    const q = dskInput.value; if (q.trim()) dskSearch(q, currentFilter);
+  });
+});
+
+async function dskSearch(query, filter) {
+  if (!query.trim()) return;
+  saveHistory(query);
+  dskRenderHistory();
+  document.getElementById('desktop-empty-state').style.display = 'none';
+  document.getElementById('desktop-loading-state').style.display = 'flex';
+  document.getElementById('desktop-results-grid').innerHTML = '';
+  try {
+    const results = await searchYT(query, filter);
+    document.getElementById('desktop-loading-state').style.display = 'none';
+    if (!results.length) { document.getElementById('desktop-empty-state').style.display = 'flex'; return; }
+    tracks = results;
+    const grid = document.getElementById('desktop-results-grid');
+    grid.innerHTML = '';
+    results.forEach((t, i) => {
+      const card = buildTrackCard(t, i);
+      grid.appendChild(card);
+    });
+  } catch(e) {
+    document.getElementById('desktop-loading-state').style.display = 'none';
+    document.getElementById('desktop-empty-state').style.display = 'flex';
+  }
+}
+
+function dskRenderHistory() {
+  if (!searchHistory.length) return;
+  const section = document.getElementById('desktop-history-section');
+  const chips = document.getElementById('desktop-history-chips');
+  section.style.display = 'block';
+  chips.innerHTML = '';
+  searchHistory.forEach(q => {
+    const chip = document.createElement('div');
+    chip.className = 'history-chip';
+    chip.innerHTML = `<span>🕐</span>${escHtml(q)}`;
+    chip.addEventListener('click', () => { dskInput.value = q; dskTriggerSearch(q); });
+    chips.appendChild(chip);
+  });
+}
+
+// ── Library ──
+function dskRenderLibrary() {
+  document.getElementById('dsk-liked-count').textContent = likedTracks.length + ' titre' + (likedTracks.length !== 1 ? 's' : '');
+  document.getElementById('dsk-queue-count').textContent = queue.length + ' titre' + (queue.length !== 1 ? 's' : '');
+  document.getElementById('dsk-history-count').textContent = listenHistory.length + ' titre' + (listenHistory.length !== 1 ? 's' : '');
+  const grid = document.getElementById('desktop-playlists-grid');
+  grid.innerHTML = `<div class="dsk-new-playlist-btn" onclick="openCreatePlaylist()"><span style="font-size:22px">＋</span>Nouvelle playlist</div>`;
+  playlists.forEach(pl => {
+    const card = document.createElement('div');
+    card.className = 'dsk-playlist-card';
+    const coverHtml = pl._thumbs && pl._thumbs.length ?
+      `<div class="dsk-playlist-cover-grid">${pl._thumbs.slice(0,4).map(t=>`<img src="${escHtml(t)}" alt="">`).join('')}</div>` :
+      '🎵';
+    card.innerHTML = `
+      <div class="dsk-playlist-cover">${coverHtml}</div>
+      <div class="dsk-playlist-name">${escHtml(pl.name)}</div>
+      <div class="dsk-playlist-meta">${pl.track_count} titre${pl.track_count !== 1 ? 's' : ''}</div>
+      <div class="dsk-playlist-actions">
+        <button class="dsk-playlist-btn" onclick="event.stopPropagation();openPlaylistView('${pl.id}')">▶ Lire</button>
+        <button class="dsk-playlist-btn" style="flex:0;padding:8px 10px;background:rgba(184,224,247,0.06);border-color:rgba(184,224,247,0.12);color:var(--text3)" onclick="event.stopPropagation();openPlaylistMenuById('${pl.id}')">⋯</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function dskOpenSubView(type) {
+  // reuse mobile sub-view logic
+  if (type === 'liked') openLikedView();
+  else if (type === 'queue') openQueueView();
+  else if (type === 'history') openHistoryView();
+}
+
+// ── Profile ──
+function dskRenderProfile() {
+  const inner = document.getElementById('desktop-profile-inner');
+  if (!currentUser) {
+    inner.innerHTML = `<div style="text-align:center;padding:60px 40px">
+      <div style="font-size:64px;margin-bottom:20px">🐧</div>
+      <h2 style="font-family:'Syne',sans-serif;font-size:20px;margin-bottom:12px;">Connecte-toi</h2>
+      <p style="color:var(--text3);font-size:14px;margin-bottom:24px">Accède à ta bibliothèque et tes playlists depuis n'importe où.</p>
+      <button class="login-prompt-btn" onclick="showAuthScreen()">Se connecter / S'inscrire</button>
+    </div>`;
+    return;
+  }
+  const name = userProfile?.full_name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Pingu';
+  const initials = name.charAt(0).toUpperCase();
+  inner.innerHTML = `
+    <div class="dsk-profile-header">
+      <div class="dsk-profile-avatar">${initials}</div>
+      <div class="dsk-profile-info">
+        <div class="dsk-profile-name">${escHtml(name)}</div>
+        <div class="dsk-profile-email">${escHtml(currentUser.email)}</div>
+        <div class="dsk-profile-stats">
+          <div class="dsk-profile-stat"><div class="dsk-profile-stat-num">${likedTracks.length}</div><div class="dsk-profile-stat-label">Aimés</div></div>
+          <div class="dsk-profile-stat"><div class="dsk-profile-stat-num">${playlists.length}</div><div class="dsk-profile-stat-label">Playlists</div></div>
+          <div class="dsk-profile-stat"><div class="dsk-profile-stat-num">${listenHistory.length}</div><div class="dsk-profile-stat-label">Écoutés</div></div>
+        </div>
+      </div>
+    </div>
+    <button class="dsk-logout-btn" onclick="doLogout()">⏻ Se déconnecter</button>
+  `;
+}
+
+// ── Player sync ──
+function dskUpdatePlayer() {
+  const isEmpty = !currentTrack;
+  document.getElementById('dsk-empty').style.display = isEmpty ? 'flex' : 'none';
+  document.getElementById('dsk-player-track').style.display = isEmpty ? 'none' : 'flex';
+  if (!currentTrack) return;
+  document.getElementById('dsk-track-title').textContent = currentTrack.title || '—';
+  document.getElementById('dsk-track-channel').textContent = currentTrack.channel || '—';
+  const img = document.getElementById('dsk-thumb-img');
+  const ph = document.getElementById('dsk-thumb-placeholder');
+  if (currentTrack.thumb) { img.src = currentTrack.thumb; img.style.display = 'block'; ph.style.display = 'none'; }
+  else { img.style.display = 'none'; ph.style.display = 'flex'; }
+}
+
+function dskUpdatePlayPause(playing) {
+  const btn = document.getElementById('dsk-btn-play');
+  if (btn) btn.textContent = playing ? '⏸' : '▶';
+}
+
+function dskUpdateProgress(cur, dur) {
+  const fill = document.getElementById('dsk-bar-fill');
+  const curEl = document.getElementById('dsk-time-cur');
+  const durEl = document.getElementById('dsk-time-dur');
+  if (fill && dur > 0) fill.style.width = (cur/dur*100) + '%';
+  if (curEl) curEl.textContent = formatTime(cur);
+  if (durEl) durEl.textContent = formatTime(dur);
+}
+
+function dskSeek(event) {
+  const wrap = document.getElementById('dsk-bar-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+  if (ytPlayer && ytPlayer.getDuration) {
+    const dur = ytPlayer.getDuration();
+    if (dur > 0) ytPlayer.seekTo(dur * ratio, true);
+  }
+}
+
+function dskUpdateLike() {
+  const btn = document.getElementById('dsk-like-btn');
+  if (btn && currentTrack) btn.textContent = isLiked(currentTrack) ? '❤️' : '🤍';
+}
+
+function dskUpdateShuffle(on) {
+  const btn = document.getElementById('dsk-shuffle-btn');
+  if (btn) btn.classList.toggle('active-mode', on);
+}
+
+function dskUpdateRepeat(mode) {
+  const btn = document.getElementById('dsk-repeat-btn');
+  if (btn) {
+    btn.classList.toggle('active-mode', mode !== 'none');
+    btn.textContent = mode === 'one' ? '🔂' : '🔁';
+  }
+}
+
+// ── Sidebar user ──
+function dskUpdateUser() {
+  if (!currentUser) return;
+  const name = userProfile?.full_name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Pingu';
+  const el = document.getElementById('sidebar-avatar');
+  if (el) el.textContent = name.charAt(0).toUpperCase();
+  const nameEl = document.getElementById('sidebar-user-name');
+  if (nameEl) nameEl.textContent = name;
+  const emailEl = document.getElementById('sidebar-user-email');
+  if (emailEl) emailEl.textContent = currentUser.email;
+}
+
+// ── Hook into existing functions ──
+const _origHideAuth = hideAuthScreen;
+window.hideAuthScreen = function() {
+  _origHideAuth();
+  dskUpdateUser();
+  dskRenderLibrary();
+  dskRenderProfile();
+};
+
+// ── Volume slider sync ──
+document.getElementById('dsk-volume-slider').addEventListener('input', function() {
+  setVolume(this.value);
+  // also sync mobile slider
+  const mobileSlider = document.getElementById('fp-volume-slider');
+  if (mobileSlider) mobileSlider.value = this.value;
+});
+
+// ── Init desktop history ──
+dskRenderHistory();
 </script>
 </body>
 </html>
