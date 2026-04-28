@@ -794,8 +794,7 @@ html, body {
 #btn-install { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 50px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
 #btn-dismiss-install { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 18px; flex-shrink: 0; }
 
-/* YT hidden */
-#yt-container { position: fixed; width: 1px; height: 1px; top: -9999px; left: -9999px; opacity: 0; pointer-events: none; }
+
 
 /* Scroll page wrapper */
 #page-search { display: none; flex-direction: column; height: 100%; }
@@ -1574,8 +1573,7 @@ html, body {
   </div>
 </div>
 
-<!-- YouTube iframe (hidden) -->
-<div id="yt-container"><div id="yt-player"></div></div>
+
 <div id="toast"></div>
 
 <!-- ═══════════════════════════════════
@@ -1751,7 +1749,6 @@ let currentUser = null, userProfile = null;
 let likedTracks = [], playlists = [], listenHistory = [];
 let currentPlaylistId = null;
 let pendingAddTrack = null; // track to add to playlist
-let audioFallback = null;
 let volume = 80;
 
 // ==================== AUTH ====================
@@ -2023,25 +2020,24 @@ function clearQueue() { queue = []; queueIndex = -1; useQueue = false; renderLib
 
 // ==================== PLAYBACK ====================
 function playTrack(index, context) {
-  if (!ytReady) { showToast('Lecteur en cours de chargement...'); setTimeout(() => playTrack(index, context), 1000); return; }
   const trackList = context || tracks;
   currentIndex = index;
   currentTrack = trackList[index];
   useQueue = false;
 
   updatePlayerUI();
-  ytPlayer.loadVideoById({ videoId: currentTrack.id, startSeconds: 0 });
+  fetchAndPlay(currentTrack.id, false);
   saveListenHistory(currentTrack);
   updateLikeButtons();
 }
 
 function playFromQueue(index) {
-  if (!ytReady || queue.length === 0) return;
+  if (queue.length === 0) return;
   queueIndex = index;
   currentTrack = queue[index];
   useQueue = true;
   updatePlayerUI();
-  ytPlayer.loadVideoById({ videoId: currentTrack.id, startSeconds: 0 });
+  fetchAndPlay(currentTrack.id, false);
   saveListenHistory(currentTrack);
   updateLikeButtons();
 }
@@ -2077,8 +2073,8 @@ function updatePlayerUI() {
 }
 
 function togglePlayPause() {
-  if (!currentTrack) return;
-  if (isPlaying) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
+  if (!currentTrack || !audioEl) return;
+  if (isPlaying) audioEl.pause(); else audioEl.play().catch(() => {});
 }
 
 function playNext() {
@@ -2128,7 +2124,7 @@ function toggleRepeat() {
 
 function setVolume(val) {
   volume = parseInt(val);
-  if (ytPlayer?.setVolume) ytPlayer.setVolume(volume);
+  if (audioEl) audioEl.volume = volume / 100;
   const pct = volume + '%';
   document.getElementById('fp-volume-slider').style.background = `linear-gradient(to right, var(--accent) ${pct}, var(--bg3) ${pct})`;
 }
@@ -2140,64 +2136,82 @@ function shareCurrentTrack() {
   else { navigator.clipboard?.writeText(url); showToast('Lien copié ! 🔗'); }
 }
 
-// ==================== YT API ====================
-window.onYouTubeIframeAPIReady = function() {
-  ytReady = true;
-  ytPlayer = new YT.Player('yt-player', {
-    height: '1', width: '1',
-    host: 'https://www.youtube-nocookie.com',
-    playerVars: {
-      autoplay: 0, controls: 0, disablekb: 1, fs: 0,
-      iv_load_policy: 3, modestbranding: 1, rel: 0,
-      origin: window.location.origin,
-      playsinline: 1, enablejsapi: 1,
-      cc_load_policy: 0, cc_lang_pref: 'none'
-    },
-    events: { onReady: () => { ytPlayer.setVolume(volume); }, onStateChange: onPlayerStateChange, onError: onPlayerError }
-  });
-};
+// ==================== AUDIO ENGINE (Invidious, pas d'iframe YT) ====================
+let audioEl = null;  // <audio> natif, remplace ytPlayer
 
-function onPlayerStateChange(e) {
-  const S = YT.PlayerState;
-  if (e.data === S.PLAYING) {
+function initAudioEngine() {
+  audioEl = new Audio();
+  audioEl.volume = volume / 100;
+  audioEl.addEventListener('play', () => {
     isPlaying = true; updatePlayBtns(); startProgress();
     document.getElementById('player-inner').classList.add('playing');
     document.getElementById('fp-art').classList.add('playing');
-  } else if (e.data === S.PAUSED || e.data === S.ENDED) {
+  });
+  audioEl.addEventListener('pause', () => {
     isPlaying = false; updatePlayBtns(); stopProgress();
     document.getElementById('player-inner').classList.remove('playing');
     document.getElementById('fp-art').classList.remove('playing');
-    if (e.data === S.ENDED) playNext();
+  });
+  audioEl.addEventListener('ended', () => {
+    isPlaying = false; updatePlayBtns(); stopProgress();
+    document.getElementById('player-inner').classList.remove('playing');
+    document.getElementById('fp-art').classList.remove('playing');
+    playNext();
+  });
+  audioEl.addEventListener('error', () => {
+    showToast('Erreur de lecture, nouvelle tentative...');
+    if (currentTrack) fetchAndPlay(currentTrack.id, true);
+  });
+  ytReady = true; // compatibilité avec le reste du code
+}
+
+// Cache des URLs audio pour éviter de refetch
+const audioCache = {};
+
+async function fetchAndPlay(videoId, skipCache) {
+  if (!skipCache && audioCache[videoId]) {
+    audioEl.src = audioCache[videoId];
+    audioEl.play().catch(() => showToast('Lecture bloquée par le navigateur'));
+    return;
   }
-}
-
-function onPlayerError(e) {
-  if (currentTrack) { showToast('YouTube indispo, tentative alternative...'); playViaInvidious(currentTrack.id); }
-}
-
-async function playViaInvidious(videoId) {
+  showToast('Chargement...');
   for (const inst of INVIDIOUS_INSTANCES) {
     try {
-      const res = await fetch(`${inst}/api/v1/videos/${videoId}?fields=adaptiveFormats`, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(`${inst}/api/v1/videos/${videoId}?fields=adaptiveFormats,lengthSeconds`, { signal: AbortSignal.timeout(6000) });
       if (!res.ok) continue;
       const data = await res.json();
-      const audioFormats = (data.adaptiveFormats || []).filter(f => f.type?.startsWith('audio/'));
-      if (!audioFormats.length) continue;
-      audioFormats.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
-      playAudioFallback(audioFormats[0].url); return;
-    } catch {}
+      // Préférer opus/webm pour qualité, sinon mp4a
+      const fmts = (data.adaptiveFormats || []).filter(f => f.type?.startsWith('audio/'));
+      if (!fmts.length) continue;
+      // Trier : opus d'abord (meilleure qualité), puis par bitrate
+      fmts.sort((a, b) => {
+        const aOpus = a.type?.includes('opus') ? 1 : 0;
+        const bOpus = b.type?.includes('opus') ? 1 : 0;
+        if (bOpus !== aOpus) return bOpus - aOpus;
+        return (b.bitrate || 0) - (a.bitrate || 0);
+      });
+      const url = fmts[0].url;
+      audioCache[videoId] = url;
+      audioEl.src = url;
+      await audioEl.play();
+      return;
+    } catch (err) {
+      console.warn('Invidious instance failed:', inst, err);
+    }
   }
   showToast('Impossible de lire ce titre 😢');
 }
 
-function playAudioFallback(url) {
-  if (audioFallback) { audioFallback.pause(); audioFallback = null; }
-  audioFallback = new Audio(url);
-  audioFallback.volume = volume / 100;
-  audioFallback.play().catch(() => showToast('Erreur de lecture'));
-  audioFallback.onended = playNext;
-  isPlaying = true; updatePlayBtns();
-}
+// Remplacement des méthodes ytPlayer utilisées ailleurs
+const ytPlayer = {
+  getCurrentTime: () => audioEl?.currentTime || 0,
+  getDuration: () => audioEl?.duration || 0,
+  seekTo: (t) => { if (audioEl) audioEl.currentTime = t; },
+  pauseVideo: () => audioEl?.pause(),
+  playVideo: () => audioEl?.play().catch(() => {}),
+  setVolume: (v) => { if (audioEl) audioEl.volume = v / 100; },
+  loadVideoById: ({ videoId }) => fetchAndPlay(videoId, false),
+};
 
 function updatePlayBtns() {
   const icon = isPlaying ? '⏸' : '▶';
@@ -2211,10 +2225,10 @@ function updatePlayBtns() {
 function startProgress() { stopProgress(); progressInterval = setInterval(updateProgress, 500); }
 function stopProgress() { if (progressInterval) { clearInterval(progressInterval); progressInterval = null; } }
 function updateProgress() {
-  if (!ytPlayer?.getCurrentTime) return;
+  if (!audioEl || !currentTrack) return;
   try {
-    const cur = ytPlayer.getCurrentTime(), dur = ytPlayer.getDuration();
-    if (!dur) return;
+    const cur = audioEl.currentTime, dur = audioEl.duration;
+    if (!dur || isNaN(dur)) return;
     const pct = (cur / dur) * 100;
     document.getElementById('progress-bar-fill').style.width = pct + '%';
     document.getElementById('fp-bar-fill').style.width = pct + '%';
@@ -2227,14 +2241,14 @@ function updateProgress() {
 }
 
 document.getElementById('progress-bar-wrap').addEventListener('click', function(e) {
-  if (!ytPlayer || !currentTrack) return;
+  if (!audioEl || !currentTrack) return;
   const rect = this.getBoundingClientRect(), pct = (e.clientX - rect.left) / rect.width;
-  const dur = ytPlayer.getDuration(); if (dur) ytPlayer.seekTo(pct * dur, true);
+  if (audioEl.duration) audioEl.currentTime = pct * audioEl.duration;
 });
 document.getElementById('fp-bar-wrap').addEventListener('click', function(e) {
-  if (!ytPlayer || !currentTrack) return;
+  if (!audioEl || !currentTrack) return;
   const rect = this.getBoundingClientRect(), pct = (e.clientX - rect.left) / rect.width;
-  const dur = ytPlayer.getDuration(); if (dur) ytPlayer.seekTo(pct * dur, true);
+  if (audioEl.duration) audioEl.currentTime = pct * audioEl.duration;
 });
 
 // ==================== FULLSCREEN PLAYER ====================
@@ -2743,10 +2757,8 @@ document.getElementById('btn-dismiss-install').addEventListener('click', () => d
 // ==================== SERVICE WORKER ====================
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 
-// ==================== LOAD YT API ====================
-const ytTag = document.createElement('script');
-ytTag.src = 'https://www.youtube.com/iframe_api';
-document.head.appendChild(ytTag);
+// ==================== INIT AUDIO ENGINE ====================
+initAudioEngine();
 
 // ==================== INIT ====================
 document.getElementById('results-grid').style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:0 20px';
@@ -2953,10 +2965,7 @@ function dskSeek(event) {
   const wrap = document.getElementById('dsk-bar-wrap');
   const rect = wrap.getBoundingClientRect();
   const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-  if (ytPlayer && ytPlayer.getDuration) {
-    const dur = ytPlayer.getDuration();
-    if (dur > 0) ytPlayer.seekTo(dur * ratio, true);
-  }
+  if (audioEl && audioEl.duration) audioEl.currentTime = audioEl.duration * ratio;
 }
 
 function dskUpdateLike() {
