@@ -2791,25 +2791,47 @@ document.querySelectorAll('.desktop-tab-btn').forEach(btn => {
 
 async function dskSearch(query, filter) {
   if (!query.trim()) return;
+  // Switch to search panel
+  document.querySelectorAll('#desktop-panel-search,#desktop-panel-library,#desktop-panel-profile').forEach(p => p.classList.remove('active'));
+  document.getElementById('desktop-panel-search').classList.add('active');
+  document.querySelectorAll('.sidebar-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dsk-nav-search').classList.add('active');
+
   saveHistory(query);
   dskRenderHistory();
   document.getElementById('desktop-empty-state').style.display = 'none';
   document.getElementById('desktop-loading-state').style.display = 'flex';
   document.getElementById('desktop-results-grid').innerHTML = '';
+
+  let q = query.trim();
+  if (filter === 'music') q += ' audio officiel';
+  else if (filter === 'clip') q += ' clip officiel';
+  else if (filter === 'live') q += ' live concert';
+  else if (filter === 'cover') q += ' cover';
+
   try {
-    const results = await searchYT(query, filter);
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&q=${encodeURIComponent(q)}&maxResults=20&key=${YT_API_KEY}&safeSearch=none`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
     document.getElementById('desktop-loading-state').style.display = 'none';
-    if (!results.length) { document.getElementById('desktop-empty-state').style.display = 'flex'; return; }
-    tracks = results;
+    if (!data.items?.length) { document.getElementById('desktop-empty-state').style.display = 'flex'; return; }
+    const ids = data.items.map(i => i.id.videoId).join(',');
+    const detailsRes = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${ids}&key=${YT_API_KEY}`);
+    const detailsData = await detailsRes.json();
+    const detailsMap = {};
+    (detailsData.items || []).forEach(i => { detailsMap[i.id] = i; });
+    tracks = data.items.map(item => {
+      const vid = item.id.videoId, details = detailsMap[vid];
+      return { id: vid, title: item.snippet.title, channel: item.snippet.channelTitle, thumb: item.snippet.thumbnails?.medium?.url || '', duration: details ? parseDuration(details.contentDetails.duration) : null };
+    });
     const grid = document.getElementById('desktop-results-grid');
     grid.innerHTML = '';
-    results.forEach((t, i) => {
-      const card = buildTrackCard(t, i);
-      grid.appendChild(card);
-    });
+    tracks.forEach((t, i) => grid.appendChild(makeTrackCard(t, i, tracks)));
   } catch(e) {
     document.getElementById('desktop-loading-state').style.display = 'none';
     document.getElementById('desktop-empty-state').style.display = 'flex';
+    console.error(e);
   }
 }
 
