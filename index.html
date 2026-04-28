@@ -9,25 +9,37 @@
 <meta name="apple-mobile-web-app-title" content="PenguMusic">
 <title>PenguMusic</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700;800&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --bg: #0a0a0f;
-  --bg2: #111118;
-  --bg3: #1a1a24;
-  --card: #16161f;
-  --card2: #1e1e2a;
-  --border: rgba(255,255,255,0.06);
-  --accent: #5b8cff;
-  --accent2: #a78bfa;
-  --accent-glow: rgba(91,140,255,0.25);
-  --text: #f0f0f8;
-  --text2: #8888aa;
-  --text3: #55556a;
+  /* ── Thème Glacial PenguStream ── */
+  --glacier: #b8e0f7;
+  --deep: #051e30;
+  --ocean: #0a3d62;
+  --teal: #17a589;
+  --gold: #f0c040;
+  --aurora1: #43e6b5;
+  --aurora2: #7b68ee;
+  --aurora3: #ff6fb7;
+  --text-accent: #b8e0f7;
+
+  /* ── Variables internes PenguMusic ── */
+  --bg: var(--deep);
+  --bg2: #071c2e;
+  --bg3: #0d2e47;
+  --card: rgba(10, 61, 98, 0.55);
+  --card2: rgba(10, 61, 98, 0.75);
+  --border: rgba(184,224,247,0.10);
+  --accent: var(--teal);
+  --accent2: var(--aurora2);
+  --accent-glow: rgba(23,165,137,0.28);
+  --text: #f0faff;
+  --text2: rgba(184,224,247,0.7);
+  --text3: rgba(184,224,247,0.35);
   --danger: #ff6b8a;
-  --success: #4ade80;
-  --warning: #fbbf24;
+  --success: var(--aurora1);
+  --warning: var(--gold);
   --radius: 16px;
   --radius-sm: 10px;
   --player-h: 88px;
@@ -41,32 +53,49 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Nunito', 'DM Sans', sans-serif;
   overflow: hidden;
   user-select: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app { display: flex; flex-direction: column; height: 100dvh; position: relative; overflow: hidden; }
 
-/* BG */
+/* BG AURORA - style PenguStream */
 #bg-ambient { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
 #bg-ambient::before {
-  content: ''; position: absolute; width: 600px; height: 600px; top: -200px; left: -200px;
-  background: radial-gradient(circle, rgba(91,140,255,0.08) 0%, transparent 70%);
-  animation: drift1 20s ease-in-out infinite alternate;
+  content: ''; position: absolute; border-radius: 50%; filter: blur(80px); opacity: .18;
+  width: 700px; height: 400px; background: var(--aurora1);
+  top: -100px; left: -200px;
+  animation: drift1 14s ease-in-out infinite alternate;
 }
 #bg-ambient::after {
-  content: ''; position: absolute; width: 500px; height: 500px; bottom: -100px; right: -100px;
-  background: radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 70%);
-  animation: drift2 25s ease-in-out infinite alternate;
+  content: ''; position: absolute; border-radius: 50%; filter: blur(80px); opacity: .18;
+  width: 600px; height: 350px; background: var(--aurora2);
+  top: 50px; right: -150px;
+  animation: drift2 17s ease-in-out infinite alternate;
 }
-@keyframes drift1 { from { transform: translate(0,0); } to { transform: translate(60px, 40px); } }
-@keyframes drift2 { from { transform: translate(0,0); } to { transform: translate(-50px, -30px); } }
+#bg-aurora3 {
+  content: ''; position: absolute; border-radius: 50%; filter: blur(80px); opacity: .18;
+  width: 500px; height: 300px; background: var(--aurora3);
+  bottom: 100px; left: 30%;
+  animation: drift3 12s ease-in-out infinite alternate;
+}
+@keyframes drift1 { to { transform: translate(80px, 60px) scale(1.1); } }
+@keyframes drift2 { to { transform: translate(-60px, 80px) scale(.9); } }
+@keyframes drift3 { to { transform: translate(50px, -70px) scale(1.2); } }
+
+/* Stars */
+#bg-stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.star { position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; animation: twinkle var(--dur, 3s) ease-in-out infinite; }
+@keyframes twinkle { 0%,100% { opacity: .1; } 50% { opacity: .9; } }
 
 /* ===== AUTH SCREEN ===== */
 #auth-screen {
   position: fixed; inset: 0; z-index: 500;
-  background: var(--bg);
+  background: rgba(5, 30, 48, 0.97);
+  backdrop-filter: blur(20px);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   padding: 32px 24px;
@@ -148,13 +177,42 @@ html, body {
 }
 .auth-success.show { display: block; }
 
+/* ===== SOCIAL AUTH BTNS ===== */
+.auth-divider {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; max-width: 340px; margin: 12px 0;
+  color: var(--text3); font-size: 12px; font-weight: 600;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.auth-social-btns {
+  display: flex; gap: 10px; width: 100%; max-width: 340px;
+}
+.auth-social-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 14px;
+  background: rgba(184,224,247,0.06);
+  border: 1.5px solid rgba(184,224,247,0.15);
+  border-radius: 12px; color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+.auth-social-btn:hover {
+  background: rgba(184,224,247,0.12);
+  border-color: rgba(184,224,247,0.3);
+  transform: translateY(-2px);
+}
+.auth-social-btn:active { transform: translateY(0); }
+.auth-social-btn svg { flex-shrink: 0; }
+
 /* ===== NAV BOTTOM ===== */
 #bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   z-index: 90;
-  background: rgba(10,10,15,0.92);
+  background: rgba(5, 30, 48, 0.92);
   backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(184,224,247,0.12);
   display: flex;
   padding-bottom: var(--safe-bottom);
   height: calc(var(--nav-h) + var(--safe-bottom));
@@ -764,7 +822,8 @@ html, body {
 </head>
 <body>
 <div id="app">
-  <div id="bg-ambient"></div>
+  <div id="bg-ambient"><div id="bg-aurora3"></div></div>
+  <div id="bg-stars"></div>
 
   <!-- ===== AUTH SCREEN ===== -->
   <div id="auth-screen">
@@ -788,6 +847,17 @@ html, body {
       </div>
       <div class="auth-error" id="login-error"></div>
       <button class="auth-btn" id="login-btn" onclick="doLogin()">Se connecter</button>
+      <div class="auth-divider">ou continuer avec</div>
+      <div class="auth-social-btns">
+        <button class="auth-social-btn" onclick="doOAuth('discord')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+          Discord
+        </button>
+        <button class="auth-social-btn" onclick="doOAuth('google')">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+      </div>
     </div>
     <div class="auth-form" id="auth-form-signup" style="display:none">
       <div class="auth-input-wrap">
@@ -805,6 +875,17 @@ html, body {
       <div class="auth-error" id="signup-error"></div>
       <div class="auth-success" id="signup-success"></div>
       <button class="auth-btn" id="signup-btn" onclick="doSignup()">Créer mon compte</button>
+      <div class="auth-divider">ou continuer avec</div>
+      <div class="auth-social-btns">
+        <button class="auth-social-btn" onclick="doOAuth('discord')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 127.14 96.36"><path fill="#fff" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+          Discord
+        </button>
+        <button class="auth-social-btn" onclick="doOAuth('google')">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1150,6 +1231,30 @@ async function doLogout() {
   await sb.auth.signOut();
   showToast('À bientôt ! 👋');
 }
+
+async function doOAuth(provider) {
+  const redirectTo = window.location.href.split('?')[0];
+  const { error } = await sb.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo }
+  });
+  if (error) showToast('❌ ' + error.message);
+}
+
+// ==================== STARS ====================
+(function() {
+  const container = document.getElementById('bg-stars');
+  if (!container) return;
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.setProperty('--dur', (2 + Math.random() * 4).toFixed(1) + 's');
+    s.style.animationDelay = (Math.random() * 4).toFixed(1) + 's';
+    container.appendChild(s);
+  }
+})();
 
 // ==================== USER DATA ====================
 async function loadUserData() {
